@@ -5,5 +5,5 @@ Authors: \<[Rachel Moussa](https://github.com/moussarachel)\>  <Nafisa> <Dylan L
 ### General Description
  * Percepta CAM is an object detection security camera that detects people, animals, and vehicles.
 
-### Features
+### Language / Technologies
  * Python, Kaggle, Roboflow
