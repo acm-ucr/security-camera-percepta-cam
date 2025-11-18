@@ -1,5 +1,5 @@
 # Security Camera Team 5
-Authors: \<[Rachel Moussa](https://github.com/moussarachel)\>
+Authors: \<[Rachel Moussa](https://github.com/moussarachel)\> \<[Dylan Lam](https://github.com/dlam318)\>
 
 ## Project Description
 ### General Description
