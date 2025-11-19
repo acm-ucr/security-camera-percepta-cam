@@ -4,9 +4,6 @@ import tkinter as tk
 from tkinter import Label, Button
 from PIL import Image, ImageTk
 
-# Global variable to hold and run YOLO detection
-cap = None
-
 """
   Starts the webcam, runs YOLO object detection on each frame, and displays it in a window.
   Parameters:
@@ -15,9 +12,9 @@ cap = None
   - img_size: size to resize images for YOLO
   - conf_thresh: confidence threshold for object detection
 """
-def start_camera(model_path="best.pt", webcam_index=0, img_size=640, conf_thresh=0.35):
+def start_camera(model_path="datasets/best2.pt", webcam_index=1, img_size=640, conf_thresh=0.5):
 
-# add confidence measure
+# add confidence measure!!
 
   # load the YOLO model
   model = YOLO(model_path)
@@ -43,6 +40,7 @@ def start_camera(model_path="best.pt", webcam_index=0, img_size=640, conf_thresh
     for res in results:
       # Get bounding boxes, confidences, and class IDs
       boxes = res.boxes.xyxy.cpu().numpy()
+      # Shows confidence score
       confidences = res.boxes.conf.cpu().numpy()
       classes = res.boxes.cls.cpu().numpy().astype(int)
 
@@ -50,7 +48,7 @@ def start_camera(model_path="best.pt", webcam_index=0, img_size=640, conf_thresh
     for (x1, y1, x2, y2), conf, cls in zip(boxes, confidences, classes):
       label = f"{res.names[cls]} {conf:.2f}"
       cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 2)
-      cv2.putText(frame, label, (int(x1), int(y1)-10),
+      cv2.putText(frame, label, (int(x1), int(y1)-10), 
                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
 
     # display the fram with detections
