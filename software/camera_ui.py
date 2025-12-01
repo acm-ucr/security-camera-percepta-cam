@@ -3,6 +3,10 @@ from ultralytics import YOLO
 import tkinter as tk
 from tkinter import Label, Button
 from PIL import Image, ImageTk
+import paho.mqtt.client as mqtt
+
+# Initialize MQTT
+mqtt_client = mqtt.Client()
 
 """
   Starts the webcam, runs YOLO object detection on each frame, and displays it in a window.
@@ -46,6 +50,7 @@ def start_camera(model_path="datasets/best2.pt", webcam_index=1, img_size=640, c
 
     # Draw bounding boxes and labels on the frame
     for (x1, y1, x2, y2), conf, cls in zip(boxes, confidences, classes):
+      mqtt_client.publish("yolo/detections", f"{res.names[cls]}:{conf:.2f}")
       label = f"{res.names[cls]} {conf:.2f}"
       cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 2)
       cv2.putText(frame, label, (int(x1), int(y1)-10), 
