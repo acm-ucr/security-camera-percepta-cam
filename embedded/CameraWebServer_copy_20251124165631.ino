@@ -1,7 +1,14 @@
 #include "esp_camera.h"
 #include <WiFi.h>
-
 #include "board_config.h"
+#include <Adafruit_NeoPixel.h>
+#include <PubSubClient.h>
+
+#define NUM_PIXEL 1
+#define TOUCH_PIN 38
+#define RGB_LED_PIN 39
+
+Adafruit_NeoPixel pixel(NUM_PIXEL,RGB_LED_PIN,NEO_GRB + NEO_KHZ800);
 
 // ===========================
 // Enter your WiFi credentials
@@ -9,8 +16,48 @@
 const char *ssid = "legolan";
 const char *password = "legolanpwd";
 
+// MQTT Broker details
+const char* mqtt_server = "broker.emqx.io"; // e.g., "broker.emqx.io"
+const int mqtt_port = 1883;   // non-TLS MQTT
+const char* mqtt_username = "YOUR_MQTT_USERNAME";
+const char* mqtt_password = "YOUR_MQTT_PASSWORD";
+const char* mqtt_client_id = "ArduinoClient"; // Unique client ID
+
+// Define the topic to subscribe to
+const char* mqtt_topic_subscribe = "yolo/detections";
+
+WiFiClient espClient; // Use WiFiClient for non-TLS
+PubSubClient client(espClient);
+
 void startCameraServer();
 void setupLedFlash();
+
+void callback(char* topic, byte* message, unsigned int length) {
+  Serial.print("Message arrived on topic: ");
+  Serial.println(topic);
+
+  Serial.print("Message: ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)message[i]);
+  }
+  Serial.println();
+}
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+
+    if (client.connect(mqtt_client_id, mqtt_username, mqtt_password)) {
+      Serial.println("connected");
+      client.subscribe(mqtt_topic_subscribe);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" retrying in 5 seconds...");
+      delay(5000);
+    }
+  }
+}
+
 
 void setup() {
   Serial.begin(115200);
@@ -46,12 +93,12 @@ void setup() {
 
   // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
   //                      for larger pre-allocated frame buffer.
-      config.jpeg_quality = 10;
+      config.jpeg_quality = 60;
       config.fb_count = 2;
       config.grab_mode = CAMERA_GRAB_LATEST;
 
-  pinMode(13, INPUT_PULLUP);
-  pinMode(14, INPUT_PULLUP);
+  // pinMode(13, INPUT_PULLUP);
+  // pinMode(14, INPUT_PULLUP);
 
 
   // camera init
@@ -63,14 +110,13 @@ void setup() {
 
   sensor_t *s = esp_camera_sensor_get();
   // initial sensors are flipped vertically and colors are a bit saturated
-  if (s->id.PID == OV3660_PID) {
-    s->set_vflip(s, 1);        // flip it back
-    s->set_brightness(s, 1);   // up the brightness just a bit
-    s->set_saturation(s, -2);  // lower the saturation
-  }
   // drop down frame size for higher initial frame rate
-    s->set_framesize(s, FRAMESIZE_QVGA);
-    s->set_vflip(s, 1);
+    s->set_framesize(s, FRAMESIZE_QQVGA);
+    s->set_vflip(s, 0);
+    s->set_hmirror(s, 1);   // ESP32-S3-EYE lens needs mirroring
+    s->set_brightness(s, 0);
+    s->set_saturation(s, 2);
+  
 
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
@@ -88,9 +134,20 @@ void setup() {
   Serial.print("Camera Ready! Use 'http://");
   Serial.print(WiFi.localIP());
   Serial.println("' to connect");
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
+
+  pinMode(TOUCH_PIN, INPUT);
+  pixel.begin();
+  pixel.clear();
+  pixel.show();
 }
 
 void loop() {
   //  Everything is done in another task by the web server
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
   delay(10000);
 }
