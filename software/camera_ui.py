@@ -16,7 +16,7 @@ mqtt_client = mqtt.Client()
   - img_size: size to resize images for YOLO
   - conf_thresh: confidence threshold for object detection
 """
-def start_camera(model_path="datasets/best2.pt", webcam_index=1, img_size=640, conf_thresh=0.5):
+def start_camera(model_path="datasets/best2.pt", webcam_index=1, img_size=640, conf_thresh=0.25):
 
 # add confidence measure!!
 
